@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/IBM/sarama"
+
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/caller"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/consumer"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/data"
 	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
 
@@ -25,12 +30,11 @@ type Scheduler interface {
 	ErrorChan() <-chan error
 }
 
-// NewScheduler 会创建一个调度器实例。
-func NewScheduler() Scheduler {
-	return &myScheduler{}
-}
-
 type myScheduler struct {
+	consumerManager *consumer.MyConsumerManager
+	callerManager   *caller.MyCallerManager
+	consumerMsgCh   chan *sarama.ConsumerMessage // 消费者通道 用于接收kafka消息
+	callResultCh    chan *data.CallResult        // 调用者通道 用于发送调用结果至生产者
 	// ctx 代表上下文，用于感知调度器的停止。
 	ctx context.Context
 	// cancelFunc 代表取消函数，用于停止调度器。
@@ -39,6 +43,20 @@ type myScheduler struct {
 	status Status
 	// statusLock 代表专用于状态的读写锁。
 	statusLock sync.RWMutex
+}
+
+func NewScheduler() Scheduler {
+	ctx, cancel := context.WithCancel(context.Background())
+	consumerMsgCh := make(chan *sarama.ConsumerMessage, 5)
+	callResultCh := make(chan *data.CallResult, 5)
+	return &myScheduler{
+		ctx:             ctx,
+		cancelFunc:      cancel,
+		consumerManager: consumer.NewConsumerManager(ctx, consumerMsgCh),
+		callerManager:   caller.NewCallerManager(ctx, consumerMsgCh, callResultCh),
+		consumerMsgCh:   consumerMsgCh,
+		callResultCh:    callResultCh,
+	}
 }
 
 func (sched *myScheduler) Init() (err error) {
@@ -88,9 +106,19 @@ func (sched *myScheduler) Start() (err error) {
 		sched.statusLock.Unlock()
 	}()
 	if err != nil {
+		logger.Errorf("Failed to check status: %v", err)
 		return
 	}
 	// TODO
+	if err := sched.consumerManager.Start(); err != nil {
+		logger.Errorf("Failed to start consumer manager: %v", err)
+		return err
+	}
+
+	if err := sched.callerManager.Start(); err != nil {
+		logger.Errorf("Failed to start caller manager: %v", err)
+		return err
+	}
 
 	return nil
 }
@@ -143,4 +171,14 @@ func (sched *myScheduler) checkAndSetStatus(
 		sched.status = wantedStatus
 	}
 	return
+}
+
+// canceled 用于判断调度器的上下文是否已被取消。
+func (sched *myScheduler) canceled() bool {
+	select {
+	case <-sched.ctx.Done():
+		return true
+	default:
+		return false
+	}
 }

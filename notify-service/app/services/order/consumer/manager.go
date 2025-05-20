@@ -17,18 +17,16 @@ type MyConsumerManager struct {
 	group       *consumerGroup
 	consumerNum int
 	ctx         context.Context
-	receiveCh   chan *sarama.ConsumerMessage
+	//receiveCh   chan *sarama.ConsumerMessage
 }
 
-func NewConsumerManager(ctx context.Context) *MyConsumerManager {
+func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage) *MyConsumerManager {
 
-	ch := make(chan *sarama.ConsumerMessage)
 	return &MyConsumerManager{
 		consumer:    NewConsumerGroupHandler(ch),
 		group:       NewConsumerGroup(),
 		consumerNum: 5,
 		ctx:         ctx,
-		receiveCh:   ch,
 	}
 }
 
@@ -40,7 +38,7 @@ func (m *MyConsumerManager) Start() error {
 	if err := m.setupConsume(); err != nil {
 		return err
 	}
-	m.receiveMsg()
+	//m.receiveMsg()
 	logger.Info("Consumer Manager started successfully")
 
 	return nil
@@ -54,14 +52,15 @@ func (m *MyConsumerManager) setupGroup() error {
 	}
 	return nil
 }
-func (m *MyConsumerManager) receiveMsg() {
+
+/* func (m *MyConsumerManager) receiveMsg() {
 	logger.Info("Starting to receive messages...")
 	go func() {
 		for {
 			select {
 			case msg := <-m.receiveCh:
 				logger.Infof("Received message: %v", string(msg.Value))
-				m.consumer.MarkMessage(msg, "") // 标记消息已消费
+				//m.consumer.MarkMessage(msg, "") // 标记消息已消费
 				// 处理消息
 			case <-m.ctx.Done():
 				logger.Info("Stopping message receiving...")
@@ -70,7 +69,7 @@ func (m *MyConsumerManager) receiveMsg() {
 		}
 	}()
 
-}
+} */
 
 func (m *MyConsumerManager) setupConsume() error {
 	logger.Info("Starting to consume messages...")

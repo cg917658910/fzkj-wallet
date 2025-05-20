@@ -3,7 +3,7 @@ package order
 import (
 	"context"
 
-	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/consumer"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/scheduler"
 	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
 
@@ -12,18 +12,21 @@ type OrderNotifyStartResponse struct {
 	Msg  string `json:"msg"`
 }
 
-var consumerManager *consumer.MyConsumerManager
+var cgScheduler scheduler.Scheduler
 
 var logger = log.DLogger()
 
 func OrderNotifyStart(ctx context.Context) (*OrderNotifyStartResponse, error) {
 	var resp *OrderNotifyStartResponse
-	if consumerManager == nil {
-		consumerManager = consumer.NewConsumerManager(context.Background())
-		if err := consumerManager.Start(); err != nil {
-			consumerManager = nil
+	if cgScheduler == nil {
+		scheduler := scheduler.NewScheduler()
+		if err := scheduler.Init(); err != nil {
 			return nil, err
 		}
+		if err := scheduler.Start(); err != nil {
+			return nil, err
+		}
+		cgScheduler = scheduler
 	}
 	resp = &OrderNotifyStartResponse{
 		Code: 0,
@@ -32,15 +35,15 @@ func OrderNotifyStart(ctx context.Context) (*OrderNotifyStartResponse, error) {
 	return resp, nil
 }
 func OrderNotifyStop(ctx context.Context) error {
-	logger.Info("Stopping Consumer Manager...")
-	if consumerManager == nil {
-		logger.Info("Consumer Manager stopped successfully")
+	logger.Info("Stopping Notify Scheduler...")
+	if cgScheduler == nil {
+		logger.Info("Notify Scheduler stopped successfully")
 		return nil
 	}
-	if err := consumerManager.Stop(); err != nil {
+	if err := cgScheduler.Stop(); err != nil {
 		return err
 	}
-	consumerManager = nil
-	logger.Info("Consumer Manager stopped successfully")
+	cgScheduler = nil
+	logger.Info("Notify Scheduler stopped successfully")
 	return nil
 }

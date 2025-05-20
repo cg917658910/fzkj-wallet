@@ -20,8 +20,8 @@ func (c *consumerGroup) Setup() error {
 	config.Version = sarama.V3_2_3_0
 
 	config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin() // 轮询分区
-	config.Consumer.Offsets.Initial = sarama.OffsetOldest
-	config.Consumer.Offsets.AutoCommit.Enable = false //关闭自动提交
+	config.Consumer.Offsets.Initial = sarama.OffsetNewest                            // 从最早的消息开始消费
+	config.Consumer.Offsets.AutoCommit.Enable = false                                //关闭自动提交
 	config.Consumer.Return.Errors = true
 	config.Consumer.Group.Session.Timeout = time.Minute * 10 // 10分钟
 	/* config.Consumer.Group.Heartbeat.Interval = 3 * 60 * 1000 // 3分钟

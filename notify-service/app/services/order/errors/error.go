@@ -60,7 +60,7 @@ func (ce *myNotifyError) Error() string {
 // genFullErrMsg 用于生成错误提示信息，并给相应的字段赋值。
 func (ce *myNotifyError) genFullErrMsg() {
 	var buffer bytes.Buffer
-	buffer.WriteString("crawler error: ")
+	buffer.WriteString("cg notify error: ")
 	if ce.errType != "" {
 		buffer.WriteString(string(ce.errType))
 		buffer.WriteString(": ")
