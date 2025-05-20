@@ -1,0 +1,11 @@
+#config.yaml
+MySQL: # MySQL配置
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: cg123456 
+  db_name: huadong
+Kafka: # Kafka配置
+  brokers: localhost:9092
+  order_notify_topic: wallet.topic.test.order.notify
+  order_notify_consumer_group: wallet.group.test.order.notify
