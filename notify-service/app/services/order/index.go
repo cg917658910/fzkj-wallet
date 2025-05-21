@@ -34,6 +34,7 @@ func OrderNotifyStart(ctx context.Context) (*OrderNotifyStartResponse, error) {
 	}
 	return resp, nil
 }
+
 func OrderNotifyStop(ctx context.Context) error {
 	logger.Info("Stopping Notify Scheduler...")
 	if cgScheduler == nil {

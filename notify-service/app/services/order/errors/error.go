@@ -13,6 +13,9 @@ type ErrorType string
 const (
 	// ERROR_TYPE_SCHEDULER 代表调度器错误。
 	ERROR_TYPE_SCHEDULER ErrorType = "scheduler error"
+	ERROR_TYPE_CALLER    ErrorType = "caller error"
+	ERROR_TYPE_CONSUMER  ErrorType = "consumer error"
+	ERROR_TYPE_PRODUCER  ErrorType = "producer error"
 )
 
 // NotifyError 代表错误的接口类型。

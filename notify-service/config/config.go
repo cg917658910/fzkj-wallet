@@ -18,6 +18,7 @@ type MYSQL struct {
 type Kafka struct {
 	Brokers                  string `mapstructure:"brokers" json:"brokers" yaml:"brokers"`
 	OrderNofifyTopic         string `mapstructure:"order_notify_topic" json:"order_notify_topic" yaml:"order_notify_topic"`
+	OrderNofifyResultTopic   string `mapstructure:"order_notify_result_topic" json:"order_notify_result_topic" yaml:"order_notify_result_topic"`
 	OrderNofifyConsumerGroup string `mapstructure:"order_notify_consumer_group" json:"order_notify_consumer_group" yaml:"order_notify_consumer_group"`
 }
 

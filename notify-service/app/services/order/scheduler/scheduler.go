@@ -9,7 +9,8 @@ import (
 
 	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/caller"
 	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/consumer"
-	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/data"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/producer"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/types"
 	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
 
@@ -27,14 +28,16 @@ type Scheduler interface {
 	// Status 用于获取调度器的状态。
 	Status() Status
 	// ErrorChan 用于获得错误通道。
-	ErrorChan() <-chan error
+	//ErrorChan() <-chan error
 }
 
 type myScheduler struct {
 	consumerManager *consumer.MyConsumerManager
 	callerManager   *caller.MyCallerManager
+	producerManager producer.ProducerManager
 	consumerMsgCh   chan *sarama.ConsumerMessage // 消费者通道 用于接收kafka消息
-	callResultCh    chan *data.CallResult        // 调用者通道 用于发送调用结果至生产者
+	notifyResultCh  chan *types.NotifyResult     // 调用者通道 用于发送调用结果至生产者
+	markMessageCh   chan *sarama.ConsumerMessage // 用于标记消息的通道
 	// ctx 代表上下文，用于感知调度器的停止。
 	ctx context.Context
 	// cancelFunc 代表取消函数，用于停止调度器。
@@ -47,15 +50,17 @@ type myScheduler struct {
 
 func NewScheduler() Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
-	consumerMsgCh := make(chan *sarama.ConsumerMessage, 5)
-	callResultCh := make(chan *data.CallResult, 5)
+	consumerMsgCh := make(chan *sarama.ConsumerMessage, 20)
+	markMessageCh := make(chan *types.MarkMessageParams, 20)
+	notifyResultCh := make(chan *types.NotifyResult, 50) // TODO: close
 	return &myScheduler{
 		ctx:             ctx,
 		cancelFunc:      cancel,
-		consumerManager: consumer.NewConsumerManager(ctx, consumerMsgCh),
-		callerManager:   caller.NewCallerManager(ctx, consumerMsgCh, callResultCh),
+		consumerManager: consumer.NewConsumerManager(ctx, consumerMsgCh, markMessageCh),
+		callerManager:   caller.NewCallerManager(ctx, consumerMsgCh, notifyResultCh),
+		producerManager: producer.NewProducerManager(ctx, notifyResultCh, markMessageCh),
 		consumerMsgCh:   consumerMsgCh,
-		callResultCh:    callResultCh,
+		notifyResultCh:  notifyResultCh,
 	}
 }
 
@@ -120,6 +125,11 @@ func (sched *myScheduler) Start() (err error) {
 		return err
 	}
 
+	if err := sched.producerManager.Start(); err != nil {
+		logger.Errorf("Failed to start producer manager: %v", err)
+		return err
+	}
+
 	return nil
 }
 func (sched *myScheduler) Stop() (err error) {
@@ -141,7 +151,23 @@ func (sched *myScheduler) Stop() (err error) {
 	if err != nil {
 		return
 	}
+	// TODO: check
+	if err = sched.consumerManager.Stop(); err != nil {
+		logger.Errorf("Failed to stop consumer manager: %v", err)
+		return
+	}
+	if err = sched.callerManager.Stop(); err != nil {
+		logger.Errorf("Failed to stop caller manager: %v", err)
+		return
+	}
+	if err = sched.producerManager.Stop(); err != nil {
+		logger.Errorf("Failed to stop producer manager: %v", err)
+		return
+	}
 	sched.cancelFunc()
+	close(sched.consumerMsgCh)
+	close(sched.notifyResultCh)
+	close(sched.markMessageCh)
 	// TODO
 	logger.Info("Scheduler has been stopped.")
 	return nil
@@ -154,11 +180,12 @@ func (sched *myScheduler) Status() Status {
 	sched.statusLock.RUnlock()
 	return status
 }
-func (sched *myScheduler) ErrorChan() <-chan error {
+
+/* func (sched *myScheduler) ErrorChan() <-chan error {
 	logger.Debug("Scheduler ErrorChan")
 	errCh := make(chan error, 1)
 	return errCh
-}
+} */
 
 // checkAndSetStatus 用于状态的检查，并在条件满足时设置状态。
 func (sched *myScheduler) checkAndSetStatus(

@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"time"
+	"strings"
 
 	"github.com/IBM/sarama"
 	myConf "github.com/cg917658910/fzkj-wallet/notify-service/config"
@@ -23,13 +23,15 @@ func (c *consumerGroup) Setup() error {
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest                            // 从最早的消息开始消费
 	config.Consumer.Offsets.AutoCommit.Enable = false                                //关闭自动提交
 	config.Consumer.Return.Errors = true
-	config.Consumer.Group.Session.Timeout = time.Minute * 10 // 10分钟
+	//config.Consumer.Group.Session.Timeout = time.Minute * 10 // 10分钟
 	/* config.Consumer.Group.Heartbeat.Interval = 3 * 60 * 1000 // 3分钟
 	config.Consumer.Group.Rebalance.Timeout = 10 * 60 * 1000 // 10分钟
 	config.Consumer.Group.Rebalance.Retry.Max = 10
 	config.Consumer.Group.Rebalance.Retry.Backoff = 10 * 1000 // 10秒 */
 
-	group, err := sarama.NewConsumerGroup([]string{myConf.Configs.Kafka.Brokers}, myConf.Configs.Kafka.OrderNofifyConsumerGroup, config)
+	brokers := strings.Split(myConf.Configs.Kafka.Brokers, ",")
+
+	group, err := sarama.NewConsumerGroup(brokers, myConf.Configs.Kafka.OrderNofifyConsumerGroup, config)
 	if err != nil {
 		logger.Fatalf("创建消费者组失败: %v", err)
 	}

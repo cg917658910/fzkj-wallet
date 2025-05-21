@@ -8,4 +8,5 @@ MySQL: # MySQL配置
 Kafka: # Kafka配置
   brokers: localhost:9092
   order_notify_topic: wallet.topic.test.order.notify
+  order_notify_result_topic: wallet.topic.test.order.notify.result
   order_notify_consumer_group: wallet.group.test.order.notify

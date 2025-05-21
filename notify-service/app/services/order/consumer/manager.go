@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/IBM/sarama"
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/types"
 	myConf "github.com/cg917658910/fzkj-wallet/notify-service/config"
 	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
@@ -18,14 +19,16 @@ type MyConsumerManager struct {
 	consumerNum int
 	ctx         context.Context
 	//receiveCh   chan *sarama.ConsumerMessage
+	markCh <-chan *types.MarkMessageParams
 }
 
-func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage) *MyConsumerManager {
+func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage, markCh <-chan *types.MarkMessageParams) *MyConsumerManager {
 
 	return &MyConsumerManager{
 		consumer:    NewConsumerGroupHandler(ch),
 		group:       NewConsumerGroup(),
-		consumerNum: 5,
+		consumerNum: 10,
+		markCh:      markCh,
 		ctx:         ctx,
 	}
 }
@@ -33,6 +36,9 @@ func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage) *M
 func (m *MyConsumerManager) Start() error {
 	logger.Info("Starting Consumer Manager...")
 	if err := m.setupGroup(); err != nil {
+		return err
+	}
+	if err := m.setupMarkChan(); err != nil {
 		return err
 	}
 	if err := m.setupConsume(); err != nil {
@@ -44,6 +50,33 @@ func (m *MyConsumerManager) Start() error {
 	return nil
 }
 
+func (m *MyConsumerManager) setupMarkChan() error {
+	go func() {
+		for {
+			select {
+			case msg, ok := <-m.markCh:
+				if !ok {
+					logger.Info("Mark channel closed")
+					return
+				}
+				m.MarkMessage(msg)
+			case <-m.ctx.Done():
+				logger.Info("Stopping notifier...")
+				return
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (m *MyConsumerManager) MarkMessage(msg *types.MarkMessageParams) {
+	if m.consumer == nil {
+		return
+	}
+	m.consumer.MarkMessage(msg.Msg, msg.MetaData)
+}
+
 func (m *MyConsumerManager) setupGroup() error {
 	logger.Info("Starting consumer group...")
 	if err := m.group.Setup(); err != nil {
@@ -52,24 +85,6 @@ func (m *MyConsumerManager) setupGroup() error {
 	}
 	return nil
 }
-
-/* func (m *MyConsumerManager) receiveMsg() {
-	logger.Info("Starting to receive messages...")
-	go func() {
-		for {
-			select {
-			case msg := <-m.receiveCh:
-				logger.Infof("Received message: %v", string(msg.Value))
-				//m.consumer.MarkMessage(msg, "") // 标记消息已消费
-				// 处理消息
-			case <-m.ctx.Done():
-				logger.Info("Stopping message receiving...")
-				return
-			}
-		}
-	}()
-
-} */
 
 func (m *MyConsumerManager) setupConsume() error {
 	logger.Info("Starting to consume messages...")
@@ -87,6 +102,7 @@ func (m *MyConsumerManager) setupConsume() error {
 					logger.Errorf("Failed to consume message: %v", err)
 					return
 				}
+				logger.Info("Consumer group consumed message")
 			}
 		}()
 	}
