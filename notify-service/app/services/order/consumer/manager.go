@@ -116,7 +116,6 @@ func (m *MyConsumerManager) Stop() error {
 		logger.Errorf("Failed to stop consumer group: %v", err)
 		return err
 	}
-	m.ctx.Done()
 	logger.Info("Consumer group stopped successfully")
 	return nil
 }

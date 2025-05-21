@@ -63,7 +63,6 @@ func (m *MyCallerManager) startReciveMsg() error {
 			case msg := <-m.msgCh:
 				m.processMsg(msg)
 			case <-m.ctx.Done():
-				logger.Infoln("Stopping caller...")
 				return
 			}
 		}
@@ -117,7 +116,6 @@ func (m *MyCallerManager) setupWorker() error {
 				case task := <-m.workerCh:
 					m.processNotifyTask(task)
 				case <-m.ctx.Done():
-					logger.Info("Stopping caller...")
 					return
 				}
 			}
@@ -213,8 +211,6 @@ func sendNotifyRequest(ctx context.Context, params *types.NotifyRequestParams) (
 
 func (m *MyCallerManager) Stop() error {
 	logger.Info("Stopping Caller Manager...")
-
-	close(m.notifyResultCh)
 	logger.Info("Caller Manager stopped successfully")
 	return nil
 }

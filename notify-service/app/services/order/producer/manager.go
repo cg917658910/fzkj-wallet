@@ -68,7 +68,6 @@ func (m *myProducerManager) setupWorker() error {
 				case msg := <-m.notifyResultCh:
 					m.processWorker(msg)
 				case <-m.ctx.Done():
-					logger.Info("Stopping producer...")
 					return
 				}
 			}

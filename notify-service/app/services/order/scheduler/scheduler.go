@@ -165,9 +165,16 @@ func (sched *myScheduler) Stop() (err error) {
 		return
 	}
 	sched.cancelFunc()
-	close(sched.consumerMsgCh)
-	close(sched.notifyResultCh)
-	close(sched.markMessageCh)
+	if sched.consumerMsgCh != nil {
+		close(sched.consumerMsgCh)
+	}
+	if sched.notifyResultCh != nil {
+		close(sched.notifyResultCh)
+	}
+	if sched.markMessageCh != nil {
+		close(sched.markMessageCh)
+	}
+
 	// TODO
 	logger.Info("Scheduler has been stopped.")
 	return nil
