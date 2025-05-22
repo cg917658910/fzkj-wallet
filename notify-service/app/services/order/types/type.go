@@ -7,8 +7,8 @@ import (
 )
 
 type NotifyMessage struct {
-	RawMsg *sarama.ConsumerMessage
-	Data   struct {
+	RawMsg *sarama.ConsumerMessage `json: "-"`
+	Data   *struct {
 		Info      map[string]any `json:"info"`
 		NotifyUrl string         `json:"notify_url"`
 		OrderType string         `json:"order_type"`
@@ -34,16 +34,17 @@ func (d NotifyMessage) Check() error {
 }
 
 type NotifyTask struct {
-	RetryCount int
+	RetryCount uint `json:"retry_count"`
+
 	*NotifyMessage
 }
 
 type NotifyResult struct {
 	*NotifyTask
-	Result      string                  `json:"result"`       //通知返回内容
-	Status      enum.NotifyResultStatus `json:"status"`       //通知状态 1 成功 2 重试多次无响应 3 无效请求地址
-	Msg         string                  `json:"msg"`          //通知结果描述
-	RequestTime string                  `json:"request_time"` //最后通知时间
+	Result string                  `json:"result"` //通知返回内容
+	Status enum.NotifyResultStatus `json:"status"` //通知状态 1 成功 2 重试多次无响应 3 无效请求地址
+	Msg    string                  `json:"msg"`    //通知结果描述
+	//RequestTime string                  `json:"request_time"` //最后通知时间
 }
 
 type NotifyRequestParams struct {

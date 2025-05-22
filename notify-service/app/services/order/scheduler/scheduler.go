@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/IBM/sarama"
 
@@ -51,7 +52,7 @@ type myScheduler struct {
 func NewScheduler() Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	consumerMsgCh := make(chan *sarama.ConsumerMessage, 20)
-	markMessageCh := make(chan *types.MarkMessageParams, 20)
+	markMessageCh := make(chan *types.MarkMessageParams, 50)
 	notifyResultCh := make(chan *types.NotifyResult, 50) // TODO: close
 	return &myScheduler{
 		ctx:             ctx,
@@ -165,6 +166,7 @@ func (sched *myScheduler) Stop() (err error) {
 		return
 	}
 	sched.cancelFunc()
+	time.Sleep(time.Second * 1) // TODO:
 	if sched.consumerMsgCh != nil {
 		close(sched.consumerMsgCh)
 	}

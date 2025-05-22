@@ -25,7 +25,7 @@ type MyConsumerManager struct {
 func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage, markCh <-chan *types.MarkMessageParams) *MyConsumerManager {
 
 	return &MyConsumerManager{
-		consumer:    NewConsumerGroupHandler(ch),
+		consumer:    NewConsumerGroupHandler(ctx, ch),
 		group:       NewConsumerGroup(),
 		consumerNum: 10,
 		markCh:      markCh,
@@ -61,7 +61,6 @@ func (m *MyConsumerManager) setupMarkChan() error {
 				}
 				m.MarkMessage(msg)
 			case <-m.ctx.Done():
-				logger.Info("Stopping notifier...")
 				return
 			}
 		}
@@ -111,6 +110,7 @@ func (m *MyConsumerManager) setupConsume() error {
 
 func (m *MyConsumerManager) Stop() error {
 	logger.Info("Stopping consumer group...")
+	m.consumer.Commit()
 	err := m.group.Cleanup()
 	if err != nil {
 		logger.Errorf("Failed to stop consumer group: %v", err)

@@ -8,5 +8,9 @@ MySQL: # MySQL配置
 Kafka: # Kafka配置
   brokers: localhost:9092
   order_notify_topic: wallet.topic.test.order.notify
-  order_notify_result_topic: wallet.topic.test.order.notify.result
-  order_notify_consumer_group: wallet.group.test.order.notify
+  order_notify_result_topics: test.topic.order.notify.result,cg.topic.order.notify.result
+  order_notify_result_default_topic: default.topic.test.order.notify.result
+  order_notify_consumer_group: cg.group.test.order.notify
+  order_notify_caller_worker_num: 1000
+  order_notify_retry_num: 3
+  order_notify_retry_delay_time_s: 3

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/IBM/sarama"
 	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/types"
@@ -23,16 +24,16 @@ type myProducerManager struct {
 	notifyResultCh <-chan *types.NotifyResult
 	workerNum      int
 	producer       sarama.SyncProducer
-	topic          string
 	markMessageCh  chan *types.MarkMessageParams // 用于标记消息的通道
 }
+
+const ()
 
 func NewProducerManager(ctx context.Context, notifyResultCh <-chan *types.NotifyResult, markCh chan *types.MarkMessageParams) *myProducerManager {
 	return &myProducerManager{
 		ctx:            ctx,
 		notifyResultCh: notifyResultCh,
 		workerNum:      100,
-		topic:          config.Configs.Kafka.OrderNofifyResultTopic,
 		markMessageCh:  markCh,
 	}
 }
@@ -92,11 +93,23 @@ func (m *myProducerManager) markMessage(msg *sarama.ConsumerMessage, metadata st
 		logger.Warnln("Producer Manager markMessageCh is nil")
 		return nil
 	}
-	m.markMessageCh <- &types.MarkMessageParams{
-		Msg:      msg,
-		MetaData: metadata,
+	if !m.canceled() {
+		m.markMessageCh <- &types.MarkMessageParams{
+			Msg:      msg,
+			MetaData: metadata,
+		}
 	}
+
 	return nil
+}
+
+func (m *myProducerManager) canceled() bool {
+	select {
+	case <-m.ctx.Done():
+		return true
+	default:
+		return false
+	}
 }
 
 func (m *myProducerManager) produceMessage(data *types.NotifyResult) error {
@@ -106,30 +119,42 @@ func (m *myProducerManager) produceMessage(data *types.NotifyResult) error {
 	if data == nil {
 		return genError("message is nil")
 	}
-	value := map[string]interface{}{
-		"notifyResult": data.Result,
-		"platform":     data.Platform,
-		"data":         data.Data,
-	}
 	key := fmt.Sprintf("%s:%s", data.Platform, data.Data.DataId)
-	valueByte, err := json.Marshal(value)
+	valueByte, err := json.Marshal(data)
 	if err != nil {
 		logger.Warnf("❌ 生产者 %s 消息序列化失败: %v", key, err)
 	}
 	msg := &sarama.ProducerMessage{
-		Topic: m.topic,
+		Topic: getTopicNameByPlatform(data.Platform),
 		Key:   sarama.StringEncoder(key),
 		Value: sarama.ByteEncoder(valueByte),
 	}
 
-	partition, offset, err := m.producer.SendMessage(msg)
-	if err != nil {
-		logger.Errorf("❌ 生产者 %s 发送消息失败: %v", key, err)
-		return err
+	if m.producer == nil {
+		logger.Warnf("❌ 生产者 Prodcuer is nil ")
+		return nil
+	}
+	if !m.canceled() {
+		_, _, err = m.producer.SendMessage(msg)
+		if err != nil {
+			logger.Errorf("❌ 生产者 %s 发送消息失败: %v", key, err)
+			return err
+		}
 	}
 
-	logger.Infof("✅ 生产者发送消息: %s (Partition=%d, Offset=%d)", key, partition, offset)
+	//logger.Infof("✅ 生产者发送消息: %s (Partition=%d, Offset=%d)", key, partition, offset)
 	return nil
+}
+
+func getTopicNameByPlatform(platform string) string {
+	topics := strings.SplitSeq(config.Configs.Kafka.OrderNofifyResultTopics, ",")
+	for topic := range topics {
+		if strings.HasPrefix(topic, platform+".") {
+			return topic
+		}
+	}
+
+	return config.Configs.Kafka.OrderNofifyResultDefaultTopic
 }
 
 func (m *myProducerManager) Stop() error {

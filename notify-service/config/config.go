@@ -16,10 +16,14 @@ type MYSQL struct {
 }
 
 type Kafka struct {
-	Brokers                  string `mapstructure:"brokers" json:"brokers" yaml:"brokers"`
-	OrderNofifyTopic         string `mapstructure:"order_notify_topic" json:"order_notify_topic" yaml:"order_notify_topic"`
-	OrderNofifyResultTopic   string `mapstructure:"order_notify_result_topic" json:"order_notify_result_topic" yaml:"order_notify_result_topic"`
-	OrderNofifyConsumerGroup string `mapstructure:"order_notify_consumer_group" json:"order_notify_consumer_group" yaml:"order_notify_consumer_group"`
+	Brokers                       string `mapstructure:"brokers" json:"brokers" yaml:"brokers"`
+	OrderNofifyTopic              string `mapstructure:"order_notify_topic" json:"order_notify_topic" yaml:"order_notify_topic"`
+	OrderNofifyCallerWorkerNum    uint   `mapstructure:"order_notify_caller_worker_num" json:"order_notify_caller_worker_num" yaml:"order_notify_caller_worker_num"`
+	OrderNofifyRetryNum           uint   `mapstructure:"order_notify_retry_num" json:"order_notify_retry_num" yaml:"order_notify_retry_num"`
+	OrderNofifyRetryDelayTimeS    uint   `mapstructure:"order_notify_retry_delay_time_s" json:"order_notify_retry_delay_time_s" yaml:"order_notify_retry_delay_time_s"`
+	OrderNofifyResultTopics       string `mapstructure:"order_notify_result_topics" json:"order_notify_result_topics" yaml:"order_notify_result_topics"`
+	OrderNofifyResultDefaultTopic string `mapstructure:"order_notify_result_default_topic" json:"order_notify_result_default_topic" yaml:"order_notify_result_default_topic"`
+	OrderNofifyConsumerGroup      string `mapstructure:"order_notify_consumer_group" json:"order_notify_consumer_group" yaml:"order_notify_consumer_group"`
 }
 
 type Config struct {
