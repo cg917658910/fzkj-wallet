@@ -83,7 +83,7 @@ func (m *myProducerManager) processWorker(msg *types.NotifyResult) error {
 		return err
 	}
 	// 2. mark 原消息
-	m.markMessage(msg.RawMsg, msg.Result)
+	m.markMessage(msg.RawMsg, msg.Msg)
 	return nil
 }
 

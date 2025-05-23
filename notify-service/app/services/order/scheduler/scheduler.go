@@ -152,6 +152,8 @@ func (sched *myScheduler) Stop() (err error) {
 	if err != nil {
 		return
 	}
+	sched.cancelFunc()
+	time.Sleep(time.Second * 1) // TODO:
 	// TODO: check
 	if err = sched.consumerManager.Stop(); err != nil {
 		logger.Errorf("Failed to stop consumer manager: %v", err)
@@ -165,8 +167,6 @@ func (sched *myScheduler) Stop() (err error) {
 		logger.Errorf("Failed to stop producer manager: %v", err)
 		return
 	}
-	sched.cancelFunc()
-	time.Sleep(time.Second * 1) // TODO:
 	if sched.consumerMsgCh != nil {
 		close(sched.consumerMsgCh)
 	}

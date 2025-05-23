@@ -60,14 +60,14 @@ const (
 )
 
 func NewCallerManager(ctx context.Context, msgCh <-chan *sarama.ConsumerMessage, notifyResultCh chan *types.NotifyResult) *MyCallerManager {
-	workerNum := min(max(config.Configs.Kafka.OrderNofifyCallerWorkerNum, minWorkerNum), maxWorkerNum)
+	workerNum := min(max(config.Configs.OrderNotify.OrderNofifyCallerWorkerNum, minWorkerNum), maxWorkerNum)
 	return &MyCallerManager{
 		ctx:             ctx,
 		workerNum:       workerNum, //
-		retryNum:        min(config.Configs.Kafka.OrderNofifyRetryNum, maxRetries),
+		retryNum:        min(config.Configs.OrderNotify.OrderNofifyRetryNum, maxRetries),
 		msgCh:           msgCh,
 		notifyResultCh:  notifyResultCh,
-		retryDelayTimeS: time.Second * time.Duration(min(config.Configs.Kafka.OrderNofifyRetryDelayTimeS, retryDelayMaxTimeS)),
+		retryDelayTimeS: time.Second * time.Duration(min(config.Configs.OrderNotify.OrderNofifyRetryDelayTimeS, retryDelayMaxTimeS)),
 		workerCh:        make(chan *types.NotifyTask, workerNum*5), //需要负责关闭
 	}
 }

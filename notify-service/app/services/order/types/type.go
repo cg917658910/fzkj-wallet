@@ -14,7 +14,8 @@ type NotifyMessage struct {
 		OrderType string         `json:"order_type"`
 		DataId    string         `json:"data_id"`
 	} `json:"data"`
-	Platform string `json:"platform"` // 平台
+	MsgId    string `json:"msg_id" redis:"msg_id"` // msg id
+	Platform string `json:"platform"`              // 平台
 }
 
 func (d NotifyMessage) Check() error {
@@ -41,9 +42,9 @@ type NotifyTask struct {
 
 type NotifyResult struct {
 	*NotifyTask
-	Result string                  `json:"result"` //通知返回内容
-	Status enum.NotifyResultStatus `json:"status"` //通知状态 1 成功 2 重试多次无响应 3 无效请求地址
-	Msg    string                  `json:"msg"`    //通知结果描述
+	Result string                  `json:"result" redis:"result"` //通知返回内容
+	Status enum.NotifyResultStatus `json:"status" redis:"status"` //通知状态 1 成功 2 重试多次无响应 3 无效请求地址
+	Msg    string                  `json:"msg" redis:"msg"`       //通知结果描述
 	//RequestTime string                  `json:"request_time"` //最后通知时间
 }
 
