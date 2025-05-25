@@ -38,17 +38,20 @@ type (
 		MYSQL       MYSQL       `mapstructure:"mysql" json:"mysql" yaml:"mysql"`
 		Kafka       Kafka       `mapstructure:"kafka" json:"kafka" yaml:"kafka"`
 		Redis       Redis       `mapstructure:"redis" json:"redis" yaml:"redis"`
-		OrderNotify OrderNotify `mapstructure:"order_notify" json:"order_notify" yaml:"order_notify"`
+		OrderNotify OrderNotify `mapstructure:"notify" json:"notify" yaml:"notify"`
 	}
 )
 
 func init() {
 	log.DLogger().Infoln("notifysvc config initializing...")
-
+	var confPath = "."
+	//_, filename, _, _ := runtime.Caller(0) // 获取当前文件（config.go）路径
+	//confPath := path.Dir(filename)         // 获取当前文件目录
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(confPath)
 	viper.AutomaticEnv()
 	viper.SetConfigType("yaml")
+	viper.WatchConfig()
 
 	if err := viper.ReadInConfig(); err != nil {
 		panic("Config Read failed: " + err.Error())

@@ -6,10 +6,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order/types"
 	myConf "github.com/cg917658910/fzkj-wallet/notify-service/config"
-	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
-
-var logger = log.DLogger()
 
 type ConsumerManager interface {
 }
@@ -24,9 +21,10 @@ type MyConsumerManager struct {
 
 func NewConsumerManager(ctx context.Context, ch chan *sarama.ConsumerMessage, markCh <-chan *types.MarkMessageParams) *MyConsumerManager {
 
+	group := NewConsumerGroup()
 	return &MyConsumerManager{
-		consumer:    NewConsumerGroupHandler(ctx, ch),
-		group:       NewConsumerGroup(),
+		consumer:    NewConsumerGroupHandler(ctx, group, ch),
+		group:       group,
 		consumerNum: 10,
 		markCh:      markCh,
 		ctx:         ctx,
@@ -44,7 +42,6 @@ func (m *MyConsumerManager) Start() error {
 	if err := m.setupConsume(); err != nil {
 		return err
 	}
-	//m.receiveMsg()
 	logger.Info("Consumer Manager started successfully")
 
 	return nil
@@ -52,17 +49,8 @@ func (m *MyConsumerManager) Start() error {
 
 func (m *MyConsumerManager) setupMarkChan() error {
 	go func() {
-		for {
-			select {
-			case msg, ok := <-m.markCh:
-				if !ok {
-					logger.Info("Mark channel closed")
-					return
-				}
-				m.MarkMessage(msg)
-			case <-m.ctx.Done():
-				return
-			}
+		for msg := range m.markCh {
+			m.MarkMessage(msg)
 		}
 	}()
 
@@ -99,7 +87,6 @@ func (m *MyConsumerManager) setupConsume() error {
 				err := m.group.group.Consume(m.ctx, []string{myConf.Configs.Kafka.OrderNofifyTopic}, m.consumer)
 				if err != nil {
 					logger.Errorf("Failed to consume message: %v", err)
-					return
 				}
 				logger.Info("Consumer group consumed message")
 			}
@@ -108,14 +95,23 @@ func (m *MyConsumerManager) setupConsume() error {
 	return nil
 }
 
-func (m *MyConsumerManager) Stop() error {
-	logger.Info("Stopping consumer group...")
-	m.consumer.Commit()
-	err := m.group.Cleanup()
-	if err != nil {
-		logger.Errorf("Failed to stop consumer group: %v", err)
+func (m *MyConsumerManager) Stop(ctx context.Context) error {
+	logger.Info("Stopping consumer manager...")
+	//pause all stop consumer messsage
+	if err := m.group.PrepareStop(); err != nil {
+		logger.Errorf("Failed to PrepareStop consumer group: %v", err)
 		return err
 	}
-	logger.Info("Consumer group stopped successfully")
+	// wait mark done
+	if err := m.consumer.Stop(ctx); err != nil {
+		logger.Errorf("Failed to stop consumer handler: %v", err)
+		return err
+	}
+	//close group
+	if err := m.group.Stop(); err != nil {
+		logger.Errorf("Failed to Stop consumer group: %v", err)
+		return err
+	}
+	logger.Info("Stopping consumer manager successfully")
 	return nil
 }

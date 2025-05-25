@@ -1,19 +1,25 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	// This Service
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order"
 	"github.com/cg917658910/fzkj-wallet/notify-service/config"
 	"github.com/cg917658910/fzkj-wallet/notify-service/handlers"
+	"github.com/cg917658910/fzkj-wallet/notify-service/lib/cache"
 	"github.com/cg917658910/fzkj-wallet/notify-service/svc/server"
 )
 
 func main() {
+	ctx, cancle := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancle()
 	// Setup flags
 	flag.Parse()
 	// Setup config
@@ -22,7 +28,8 @@ func main() {
 	cfg := server.DefaultConfig
 
 	cfg = handlers.SetConfig(cfg)
-
+	cache.SetupRedis(ctx)
+	order.OrderNotifyStart(ctx)
 	startMetricsServer()
 	server.Run(cfg)
 }

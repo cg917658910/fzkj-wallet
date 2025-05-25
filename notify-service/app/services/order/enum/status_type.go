@@ -8,6 +8,7 @@ const (
 	NotifyResultStatusSuccessed NotifyResultStatus = iota
 	NotifyResultStatusFailedInvalidParams
 	NotifyResultStatusFailedMaxRetry
+	NotifyResultStatusAlreadyNotified
 )
 
 var (
@@ -15,6 +16,7 @@ var (
 		NotifyResultStatusSuccessed:           "successed",
 		NotifyResultStatusFailedInvalidParams: "failed invalid params",
 		NotifyResultStatusFailedMaxRetry:      "failed max retry",
+		NotifyResultStatusAlreadyNotified:     "already notified",
 	}
 	healthStatuStringMap = map[string]NotifyResultStatus{}
 )

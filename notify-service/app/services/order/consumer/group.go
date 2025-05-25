@@ -20,7 +20,7 @@ func (c *consumerGroup) Setup() error {
 	config.Version = sarama.V3_2_3_0
 
 	config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin() // 轮询分区
-	config.Consumer.Offsets.Initial = sarama.OffsetNewest                            // 从最早的消息开始消费
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest                            // 从最早的消息开始消费
 	config.Consumer.Offsets.AutoCommit.Enable = false                                //关闭自动提交
 	config.Consumer.Return.Errors = true
 	/* config.Consumer.Group.Session.Timeout = time.Minute * 10   // 10分钟
@@ -39,17 +39,26 @@ func (c *consumerGroup) Setup() error {
 	// 监听 Kafka 消费者组错误
 	go func() {
 		for err := range group.Errors() {
-			logger.Errorf("消费者组错误: %v\n", err)
+			errLogger.Errorf("消费者组错误: %v\n", err)
 		}
 	}()
 
 	return nil
 }
 
-func (c *consumerGroup) Cleanup() error {
+func (c *consumerGroup) PrepareStop() error {
+	logger.Info("PauseAll consumer group...")
+	c.group.PauseAll()
+	logger.Info("Consumer group PauseAll successfully")
+	return nil
+}
+
+func (c *consumerGroup) Stop() error {
+	logger.Info("Stopping consumer group...")
 	if err := c.group.Close(); err != nil {
-		logger.Errorf("关闭消费者组失败: %v", err)
+		errLogger.Errorf("关闭消费者组失败: %v", err)
 		return err
 	}
+	logger.Info("Consumer group stopped successfully")
 	return nil
 }
