@@ -1,6 +1,10 @@
 package fiat
 
-import "github.com/cg917658910/fzkj-wallet/quote-service/lib/codes"
+import (
+	"time"
+
+	"github.com/cg917658910/fzkj-wallet/quote-service/lib/codes"
+)
 
 type (
 	QuoteParams struct {
@@ -17,6 +21,7 @@ type (
 		BuyCode   int
 		Code      int32
 		Error     error
+		CacheTime time.Time
 	}
 	QuoteResponse struct {
 		Platform string  `json:"platform"`

@@ -27,7 +27,7 @@ func fetchQuoteAndCache(ctx context.Context, params *QuoteParams) (res *QuoteRes
 
 func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult) {
 	res = &QuoteResult{
-		Code: 0,
+		Code: 200,
 	}
 	if params == nil {
 		res.Error = errors.New("params is nil")

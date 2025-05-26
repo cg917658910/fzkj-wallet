@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 var quoteCache *Cache
+var (
+	_validCacheTime = 60 // seconds
+)
 
 func init() {
 	startQuoteCache()
@@ -39,6 +43,7 @@ func (c *Cache) Set(q *QuoteResult) {
 	k := c.buildKey(q.Symbol, q.Fiat)
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	q.CacheTime = time.Now()
 	c.quoteResults[k] = q
 }
 
@@ -48,6 +53,12 @@ func (c *Cache) Get(symbol, fiat string) *QuoteResult {
 	defer c.mu.RUnlock()
 	res, ok := c.quoteResults[k]
 	if !ok {
+		return nil
+	}
+	if time.Since(res.CacheTime).Seconds() > float64(_validCacheTime) {
+		logger.Infof("Cache expired|symbol=%s|fiat=%s|cacheTime=%s", symbol, fiat, res.CacheTime)
+		// Cache expired
+		delete(c.quoteResults, k)
 		return nil
 	}
 	return res
