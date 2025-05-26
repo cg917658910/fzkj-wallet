@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package quotesvc;
+
+
+import "google/api/annotations.proto";
+
+
+service QuoteService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+        get: "/health"
+    };
+  }
+  // 
+  rpc FiatQuote(FiatQuoteRequest) returns (FiatQuoteResponse) {
+    option (google.api.http) = {
+        get: "/v1/quote/fiat"
+    };
+  }
+}
+
+message FiatQuoteRequest {
+   string symbol = 1;
+   string fiat = 2;
+}
+
+message FiatQuoteResult {
+   string symbol = 1;
+   string fiat = 2;
+   float sell_price = 3;
+   float buy_price = 4;
+}
+
+message FiatQuoteResponse {
+    int32 code = 1;
+    string msg = 2;
+    FiatQuoteResult data = 3;
+}
+
+message HealthCheckRequest {
+   
+}
+
+message HealthCheckResponse {
+    int32 status = 1;
+    string message = 2;
+}
