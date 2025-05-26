@@ -1,0 +1,7 @@
+FiatQuote:
+  update_cache_base_time: 60 # secends
+  update_cache_random_time: 10 # secends
+  update_cache_enabled: true # Enable or disable cache updates
+  max_retries: 3
+  update_cache_hot_symbols: USDT
+  update_cache_hot_fiats: USD,CNY

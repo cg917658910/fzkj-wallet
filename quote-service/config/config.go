@@ -8,7 +8,15 @@ import (
 var Configs *Config
 
 type (
+	FiatQuote struct {
+		UpdateCacheBaseTime   int64  `mapstructure:"update_cache_base_time" json:"update_cache_base_time" yaml:"update_cache_base_time"`
+		UpdateCacheRandomTime int64  `mapstructure:"update_cache_random_time" json:"update_cache_random_time" yaml:"update_cache_random_time"`
+		UpdateCacheEnabled    bool   `mapstructure:"update_cache_enabled" json:"update_cache_enabled" yaml:"update_cache_enabled"`
+		UpdateCacheHotSymbols string `mapstructure:"update_cache_hot_symbols" json:"update_cache_hot_symbols" yaml:"update_cache_hot_symbols"`
+		UpdateCacheHotFiats   string `mapstructure:"update_cache_hot_fiats" json:"update_cache_hot_fiats" yaml:"update_cache_hot_fiats"`
+	}
 	Config struct {
+		FiatQuote FiatQuote `mapstructure:"FiatQuote" json:"FiatQuote" yaml:"FiatQuote"`
 	}
 )
 
