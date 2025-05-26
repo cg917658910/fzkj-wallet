@@ -15,6 +15,8 @@ type (
 		ErrorMsg  string
 		SellCode  int
 		BuyCode   int
+		Code      int32
+		Error     error
 	}
 	QuoteResponse struct {
 		Platform string  `json:"platform"`
@@ -38,3 +40,8 @@ func (q QuoteParams) Check() error {
 
 	return nil
 }
+
+const (
+	notFoundQuote    = "no valid quotes found"
+	ErrNotFoundQuote = 1002
+)

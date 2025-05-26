@@ -45,7 +45,6 @@ func fetchOkxQuote(ctx context.Context, asset, fiat, side string) (quoteResp *Qu
 		quoteResp.Error = fmt.Errorf("Quote assets empty: %s", r.ErrorMessage)
 		return
 	}
-	fmt.Println("r.Data[0]: ", r.Data[0])
 	fmt.Sscanf(r.Data[0].Price, "%f", &quoteResp.Price)
 	return
 }

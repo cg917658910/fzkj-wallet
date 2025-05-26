@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cg917658910/fzkj-wallet/quote-service/app/services/fiat"
 	pb "github.com/cg917658910/fzkj-wallet/quote-service/proto"
@@ -30,11 +29,14 @@ func (s quoteserviceService) FiatQuote(ctx context.Context, in *pb.FiatQuoteRequ
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("result: ", result)
 	resp = pb.FiatQuoteResponse{
 		Data: &pb.FiatQuoteResult{},
 	}
-	resp.Code = 0
+	resp.Code = result.Code
+	resp.Msg = "success"
+	if result.Error != nil {
+		resp.Msg = result.Error.Error()
+	}
 	resp.Data.Symbol = result.Symbol
 	resp.Data.Fiat = result.Fiat
 	resp.Data.SellPrice = result.SellPrice

@@ -51,9 +51,9 @@ func startCacheUpdater() {
 						Fiat:   fiat,
 					}
 					// TODO：go routine fetch
-					res, err := fetchQuote(ctx, params)
-					if err != nil {
-						logger.Errorf("fetchQuoteAndCache error|symbol=%s|fiat=%s|error=%v", symbol, fiat, err)
+					res := fetchQuote(ctx, params)
+					if res.Error != nil {
+						logger.Errorf("fetchQuoteAndCache error|symbol=%s|fiat=%s|error=%v", symbol, fiat, res.Error)
 						continue
 					}
 					logger.Infof("update cache|symbol=%s|fiat=%s|buyPrice=%v|sellPrice=%v", res.Symbol, res.Fiat, res.BuyPrice, res.SellPrice)

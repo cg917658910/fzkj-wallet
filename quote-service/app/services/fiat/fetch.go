@@ -16,18 +16,22 @@ func fetchQuoteAndCache(ctx context.Context, params *QuoteParams) (res *QuoteRes
 		logger.Infof("fetchQuote use cache|asset=%s|fiat=%s|buyPrice=%v|sellPrice=%v", params.Symbol, params.Fiat, cacheResult.BuyPrice, cacheResult.SellPrice)
 		return cacheResult, nil
 	}
-	res, err = fetchQuote(ctx, params)
-	if err != nil {
-		return nil, err
+	res = fetchQuote(ctx, params)
+	if res.Error != nil {
+		return res, err
 	}
 	// set cache
 	quoteCache.Set(res)
 	return res, nil
 }
 
-func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult, err error) {
+func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult) {
+	res = &QuoteResult{
+		Code: 0,
+	}
 	if params == nil {
-		err = errors.New("params is nil")
+		res.Error = errors.New("params is nil")
+		res.Code = ErrNotFoundQuote
 		return
 	}
 	var (
@@ -39,6 +43,7 @@ func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult, err
 	for _, side := range []string{"BUY", "SELL"} {
 		wg.Add(2)
 		go func(symbol, side string) {
+
 			defer wg.Done()
 			logger.Infof("send fetchBinanceQuote request|asset=%s|fiat=%s|side=%s", symbol, fiat, side)
 			result := fetchBinanceQuote(ctx, symbol, fiat, side)
@@ -51,6 +56,7 @@ func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult, err
 		}(symbol, side)
 		// okx
 		go func(symbol, side string) {
+
 			defer wg.Done()
 			logger.Infof("send fetchOkxQuote request|asset=%s|fiat=%s|side=%s", symbol, fiat, side)
 			result := fetchOkxQuote(ctx, symbol, fiat, side)
@@ -81,18 +87,15 @@ func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult, err
 		}
 		sellQuotes = append(sellQuotes, q)
 	}
-	res = &QuoteResult{}
+
 	res.QuoteParams = params
-	res.BuyCode = 1001 // not quote
-	res.SellCode = 1001
-	if len(buyQuotes) > 0 {
-		res.BuyCode = 0
-		res.BuyPrice = float32(buyQuotes[0].Price)
+	if len(buyQuotes) == 0 || len(sellQuotes) == 0 {
+		res.Error = errors.New(notFoundQuote)
+		res.Code = ErrNotFoundQuote
+		return
 	}
-	if len(sellQuotes) > 0 {
-		res.SellCode = 0
-		res.SellPrice = float32(sellQuotes[0].Price)
-	}
+	res.BuyPrice = float32(buyQuotes[0].Price)
+	res.SellPrice = float32(sellQuotes[0].Price)
 
 	return
 }
