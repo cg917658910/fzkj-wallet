@@ -51,9 +51,9 @@ type myScheduler struct {
 
 func NewScheduler() Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
-	consumerMsgCh := make(chan *sarama.ConsumerMessage, 20)
-	markMessageCh := make(chan *types.MarkMessageParams, 50)
-	notifyResultCh := make(chan *types.NotifyResult, 50) // TODO: close
+	consumerMsgCh := make(chan *sarama.ConsumerMessage, 100)
+	markMessageCh := make(chan *types.MarkMessageParams, 100)
+	notifyResultCh := make(chan *types.NotifyResult, 2500)
 	return &myScheduler{
 		ctx:             ctx,
 		cancelFunc:      cancel,
@@ -130,7 +130,7 @@ func (sched *myScheduler) Start() (err error) {
 		logger.Errorf("Failed to start producer manager: %v", err)
 		return err
 	}
-
+	logger.Info("Start scheduler successfully")
 	return nil
 }
 func (sched *myScheduler) Stop() (err error) {
@@ -152,10 +152,11 @@ func (sched *myScheduler) Stop() (err error) {
 	if err != nil {
 		return
 	}
-	sched.cancelFunc()
-	time.Sleep(time.Second * 1) // TODO:
+	//sched.cancelFunc()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*1)
+	defer cancel()
 	// TODO: check
-	if err = sched.consumerManager.Stop(); err != nil {
+	if err = sched.consumerManager.Stop(ctx); err != nil {
 		logger.Errorf("Failed to stop consumer manager: %v", err)
 		return
 	}
@@ -167,15 +168,17 @@ func (sched *myScheduler) Stop() (err error) {
 		logger.Errorf("Failed to stop producer manager: %v", err)
 		return
 	}
-	if sched.consumerMsgCh != nil {
+	/* if sched.consumerMsgCh != nil {
 		close(sched.consumerMsgCh)
-	}
-	if sched.notifyResultCh != nil {
-		close(sched.notifyResultCh)
-	}
-	if sched.markMessageCh != nil {
+	} */
+	/* if sched.notifyResultCh != nil {
+		time.AfterFunc(time.Second*5, func() {
+			close(sched.notifyResultCh)
+		})
+	} */
+	/* if sched.markMessageCh != nil {
 		close(sched.markMessageCh)
-	}
+	} */
 
 	// TODO
 	logger.Info("Scheduler has been stopped.")

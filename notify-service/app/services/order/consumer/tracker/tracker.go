@@ -104,9 +104,6 @@ func (s *OffsetState) Done(offset int64) {
 func (s *OffsetState) CommitOffset() int64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	// TODO: 清理 TTL 过期的 "done" 状态
-
 	next := s.minReady + 1
 	for {
 		entry, ok := s.status[next]

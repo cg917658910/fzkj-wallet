@@ -5,10 +5,7 @@ import (
 
 	"github.com/IBM/sarama"
 	myConf "github.com/cg917658910/fzkj-wallet/notify-service/config"
-	"github.com/cg917658910/fzkj-wallet/notify-service/lib/log"
 )
-
-var logger = log.DLogger()
 
 func newProducer() (sarama.SyncProducer, error) {
 	config := sarama.NewConfig()

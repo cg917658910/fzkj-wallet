@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
-	"github.com/cg917658910/fzkj-wallet/notify-service/svc"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/cg917658910/fzkj-wallet/notify-service/app/services/order"
+	"github.com/cg917658910/fzkj-wallet/notify-service/svc"
 )
 
 func InterruptHandler(errc chan<- error) {
@@ -14,7 +18,10 @@ func InterruptHandler(errc chan<- error) {
 	terminateError := fmt.Errorf("%s", <-c)
 
 	// Place whatever shutdown handling you want here
-
+	// stop notify
+	ctx, cancle := context.WithTimeout(context.Background(), time.Minute*3)
+	defer cancle()
+	order.OrderNotifyStop(ctx)
 	errc <- terminateError
 }
 

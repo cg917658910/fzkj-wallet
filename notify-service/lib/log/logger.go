@@ -60,6 +60,14 @@ func DLogger() base.MyLogger {
 	})
 	return defaultLogger
 }
+func DLoggerWithWriter(out io.Writer) base.MyLogger {
+	return Logger(
+		base.TYPE_LOGRUS,
+		base.LEVEL_INFO,
+		base.FORMAT_TEXT,
+		out,
+		nil)
+}
 
 // Logger 会新建一个日志记录器。
 func Logger(
