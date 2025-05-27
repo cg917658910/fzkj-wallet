@@ -17,7 +17,7 @@ var (
 	_logPath         = "./tmp/log/notify/"
 	_logname         = "caller.log"
 	_errlogname      = "caller_error.log"
-	_useStdout  bool = false
+	_useStdout  bool = true
 )
 
 func init() {

@@ -17,7 +17,7 @@ var (
 	_logPath         = "./tmp/log/notify/"
 	_logname         = "producer.log"
 	_errlogname      = "producer_error.log"
-	_useStdout  bool = false
+	_useStdout  bool = true
 )
 
 func init() {
