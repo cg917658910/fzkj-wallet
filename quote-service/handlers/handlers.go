@@ -25,21 +25,22 @@ func (s quoteserviceService) FiatQuote(ctx context.Context, in *pb.FiatQuoteRequ
 		Symbol: in.Symbol,
 		Fiat:   in.Fiat,
 	}
-	result, err := fiat.Quote(ctx, params)
-	if err != nil {
-		return nil, err
-	}
 	resp = pb.FiatQuoteResponse{
 		Data: &pb.FiatQuoteResult{},
+		Msg:  "success",
+		Code: 1001,
 	}
-	resp.Code = result.Code
-	resp.Msg = "success"
-	if result.Error != nil {
-		resp.Msg = result.Error.Error()
+	resp.Data.Symbol = params.Symbol
+	resp.Data.Fiat = params.Fiat
+	result := fiat.Quote(ctx, params)
+	if result != nil {
+		resp.Code = result.Code
+		if result.Error != nil {
+			resp.Msg = result.Error.Error()
+		}
+		resp.Data.SellPrice = result.SellPrice
+		resp.Data.BuyPrice = result.BuyPrice
 	}
-	resp.Data.Symbol = result.Symbol
-	resp.Data.Fiat = result.Fiat
-	resp.Data.SellPrice = result.SellPrice
-	resp.Data.BuyPrice = result.BuyPrice
+
 	return &resp, nil
 }

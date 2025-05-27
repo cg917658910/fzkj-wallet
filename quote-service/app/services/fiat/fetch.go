@@ -4,25 +4,38 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/cg917658910/fzkj-wallet/quote-service/lib/codes"
 )
 
-func fetchQuoteAndCache(ctx context.Context, params *QuoteParams) (res *QuoteResult, err error) {
+func fetchQuoteAndCache(ctx context.Context, params *QuoteParams) (result *QuoteResult) {
+
+	result = &QuoteResult{
+		QuoteParams: params,
+	}
+	if params == nil {
+		result.Error = codes.ErrInvalidArgument.New("params is nil")
+		result.Code = int32(codes.ErrInvalidArgument.Code)
+		return
+	}
 	if err := params.Check(); err != nil {
-		return nil, err
+		result.Error = codes.ErrInvalidArgument.New(err.Error())
+		result.Code = int32(codes.ErrInvalidArgument.Code)
+		return
 	}
 	// 查询缓存
 	cacheResult := quoteCache.Get(params.Symbol, params.Fiat)
 	if cacheResult != nil {
 		logger.Infof("fetchQuote use cache|asset=%s|fiat=%s|buyPrice=%v|sellPrice=%v", params.Symbol, params.Fiat, cacheResult.BuyPrice, cacheResult.SellPrice)
-		return cacheResult, nil
+		return cacheResult
 	}
-	res = fetchQuote(ctx, params)
-	if res.Error != nil {
-		return res, err
+	result = fetchQuote(ctx, params)
+	if result.Error == nil {
+		// set cache
+		quoteCache.Set(result)
 	}
-	// set cache
-	quoteCache.Set(res)
-	return res, nil
+
+	return result
 }
 
 func fetchQuote(ctx context.Context, params *QuoteParams) (res *QuoteResult) {
