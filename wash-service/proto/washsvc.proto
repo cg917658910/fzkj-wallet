@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package washsvc;
+
+
+import "google/api/annotations.proto";
+
+
+service WashService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+        get: "/health"
+    };
+  }
+  // 
+  rpc WashShortMsg(WashShortMsgRequest) returns (WashShortMsgResponse) {
+    option (google.api.http) = {
+        get: "/v1/wash/shortmsg"
+    };
+  }
+}
+
+message WashShortMsgRequest {
+   string msg = 1;
+   string msg_id = 2;
+   string currency = 3;
+   string type_name = 4;
+}
+
+message WashShortMsgResult {
+   int64 pay_time = 1;
+   double pay_coin = 2;
+   double balance = 3;
+}
+
+message WashShortMsgResponse {
+    int32 code = 1;
+    string msg = 2;
+    WashShortMsgResult data = 3;
+}
+
+message HealthCheckRequest {
+   
+}
+
+message HealthCheckResponse {
+    int32 status = 1;
+    string message = 2;
+}
